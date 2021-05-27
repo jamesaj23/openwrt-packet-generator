@@ -1,7 +1,7 @@
 import socket
 import struct
 
-import scapy
+import scapy.all as scapy
 
 # Helper method to obtain IP of our router
 def get_default_gateway_linux():
@@ -16,4 +16,12 @@ def get_default_gateway_linux():
             return socket.inet_ntoa(struct.pack("<L", int(fields[2], 16)))
             
 
+def generate_packets():
+    """Handler function to create our desired packets."""
+    # packets = []
+    scapy.send(scapy.IP(dst=str(get_default_gateway_linux()))/scapy.ICMP())
+    scapy.sendp("I'm travelling on python")
 
+
+def generate_end_of_transmission():
+    scapy.sendp("End Transmission")
