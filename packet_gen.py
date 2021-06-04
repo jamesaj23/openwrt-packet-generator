@@ -8,7 +8,7 @@ import scapy.all as scapy
 
 LOGGER = logging.getLogger()
 
-DATA_FILE_PATH = ""
+DATA_FILE_PATH = "data_file.jpg"
 BUFFER_SIZE = 1024
 DESTINATION_HOST = "192.168.20.13"
 DESTINATION_PORT = 5001
@@ -52,7 +52,7 @@ def send_file(s, path):
     with open(path, "rb") as f:
         while True:
             bytes_read = f.read(BUFFER_SIZE)
-
+            LOGGER.debug()
             if not bytes_read:
                 break
 
@@ -72,3 +72,4 @@ def handler(only_logger=False):
     s = create_session(DESTINATION_HOST, DESTINATION_PORT)
     LOGGER.info("Session created.")
     send_file(s, DATA_FILE_PATH)
+    s.close()
