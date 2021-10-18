@@ -10,40 +10,49 @@ import numpy as np
 import pandas as pd
 
 
-def begin_iperf_client(port):
+LOGGER = logging.getLogger()
+
+
+def start_client(index, results, config, iperf_timeout):
     """
     Launch iperf client session through a subproccess.
     This offloads most of the parallelism away from python as,
     well as enabling the use of the iperf TOS/DSCP fields,
     which are not presently supported in the iperf3 python library.
     """
-    try:
-        iperf_out = subprocess.run(
-            [
+    shell_statement = [
                 "iperf3",
                 # GENERAL OPTIONS
-                "--port", port,
+                "--port", config["port"],
                 "--format", "k",
-                "--interval", interval,
-                "--client",
+                "--interval", config["interval"],
                 "--json",
                 # CLIENT SPECIFIC OPTIONS
-                "--client", host,
-                "--time", time,
+                "--client", config["host"],
+                "--time", config["delay"],
                 "--reverse",  # Client receives, server sends
-                "--tos", tos,  # TOS/DSCP vector
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=iperf_timeout,
-            universal_newlines=True,
-        )
-        except subprocess.TimeoutExpired:
-            return self._get_wget_error("wget-timeout", url, traceback=None)
-    pass
+                "--tos", config["tos"],  # TOS/DSCP vector
+            ]
+    LOGGER.info(f"Shell statement: {shell_statement}")
+    # try:
+    iperf_out = subprocess.run(
+        shell_statement,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=iperf_timeout,
+        universal_newlines=True,
+    )
+    results[index] = iperf_out
+    LOGGER.info(iperf_out)
+    # except subprocess.TimeoutExpired:
+    #     return iperf_shell_error("iperf-timeout", traceback=None)
 
 
-def begin_iperf_server():
+def iperf_shell_error(key, traceback=None):
+    return "Error!!!!"
+
+
+def start_server(port):
     """
     Launch an iperf server session through the python iperf3 libary.
     The server doesn't care about parallelism, and TOS/DSCP should
@@ -52,3 +61,6 @@ def begin_iperf_server():
     server = iperf3.Server()
     server.port = port
     server.verbose = True
+    result = server.run()
+    return result
+    
