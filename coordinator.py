@@ -12,6 +12,7 @@ import pandas as pd
 
 import iperf_tools as ipt
 
+LOGGER = logging.getLogger()
 
 class Coordinator():
     """Coordinator to launch iperf measurements and gather results"""
@@ -26,19 +27,34 @@ class Coordinator():
         """
         pass
 
-    def _generate_clients(self, client_config):
+    def _generate_clients(self):
         """
         Spin up a thread for each required client, launch iperf instance
+
+        Since we are creating processes via subprocess, this can be handled
+        only in threads with little performance cost.
+
         :param client_config: Slice of config dict containing the clients
         :return: List of outputs from each client
         """
         threads = []
-        results = []
-        for client in client_config:
-            client_args = ""
+        results = [None for i in range(len(self.config["clients"]))]
+        print(f"Len results: {len(results)}")
+        for idx, client in enumerate(self.config["clients"]):
+            client_args = [
+                idx,
+                results,
+                client["port"],
+                client["interval"],
+                client["host"],
+                client["delay"],
+                client["tos"],
+                client["iperf_timeout"]
+            ]
+            LOGGER.info(f"Client args for client {idx}: {client_args}")
             thread = threading.Thread(
                 target=ipt.start_client,
-                args=[client_args]
+                args=client_args
             )
             threads.append(thread)
 
@@ -47,8 +63,13 @@ class Coordinator():
             th.start()
 
         # Wait until all threads have completed
-        for th in threads:
-            th.join()
+        for idx, th in enumerate(threads):
+            try:
+                th.join()
+            except Exception as e:
+                LOGGER.debug(e)
+                # Record failure in the results list
+                results[idx] = str(e)
 
         return results
 
@@ -61,9 +82,31 @@ class Coordinator():
         """
         try:
             result_dict = json.loads(result)
-            return result_dict
         except json.decoder.JSONDecodeError as e:
             return e
+
+        df = pd.DataFrame(
+            columns=[
+                "start_time",
+                "end_time",
+                "duration",
+                "num_bytes",
+                "bits_per_second",
+                "omitted",
+            ]
+        )
+
+        for interval in result_dict["intervals"]:
+            df = df.append({
+                "start_time": interval["sum"]["start"],
+                "end_time": interval["sum"]["end"],
+                "duration": interval["sum"]["seconds"],
+                "num_bytes": interval["sum"]["bytes"],
+                "bits_per_second": interval["sum"]["bits_per_second"],
+                "omitted": interval["sum"]["omitted"],
+            }, ignore_index=True)
+
+        return df
 
     def _collect_results(self, results):
         """
@@ -75,5 +118,6 @@ class Coordinator():
         results = self._generate_clients()
         formatted_results = []
         for r in results:
-            formatted_results.append(self._format_result(r))
-        self._collect_results(formatted_results)
+            formatted_results.append(self._format_result(r.stdout))
+
+        return formatted_results

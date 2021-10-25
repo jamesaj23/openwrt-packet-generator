@@ -13,25 +13,27 @@ import pandas as pd
 LOGGER = logging.getLogger()
 
 
-def start_client(index, results, config, iperf_timeout):
+def start_client(index, results, port, interval, host, delay, tos, iperf_timeout):
     """
     Launch iperf client session through a subproccess.
     This offloads most of the parallelism away from python as,
     well as enabling the use of the iperf TOS/DSCP fields,
     which are not presently supported in the iperf3 python library.
     """
+    LOGGER.info(f"Starting client at idx: {index}")
     shell_statement = [
                 "iperf3",
                 # GENERAL OPTIONS
-                "--port", config["port"],
+                "--port", port,
                 "--format", "k",
-                "--interval", config["interval"],
+                "--interval", interval,
                 "--json",
                 # CLIENT SPECIFIC OPTIONS
-                "--client", config["host"],
-                "--time", config["delay"],
+                "--client", host,
+                "--verbose",
+                "--time", delay,
                 "--reverse",  # Client receives, server sends
-                "--tos", config["tos"],  # TOS/DSCP vector
+                "--tos", tos,  # TOS/DSCP vector
             ]
     LOGGER.info(f"Shell statement: {shell_statement}")
     # try:
@@ -44,6 +46,7 @@ def start_client(index, results, config, iperf_timeout):
     )
     results[index] = iperf_out
     LOGGER.info(iperf_out)
+    return iperf_out
     # except subprocess.TimeoutExpired:
     #     return iperf_shell_error("iperf-timeout", traceback=None)
 
