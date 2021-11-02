@@ -16,13 +16,15 @@ import connections as conn
 
 LOGGER = logging.getLogger()
 
+
 class Sensor():
     """Sensor to launch iperf measurement and gather result"""
-    def __init__(self, id, coordinator_host, port, csv_tag=None):
+    def __init__(self, id, coordinator_host, port, delay=0, csv_tag=None):
         self.id = id
         self.coordinator_host = coordinator_host
         self.port = port
         self.csv_tag = csv_tag
+        self.delay = delay
 
     def generate_server(self):
         return ipt.start_server(self.port)
@@ -46,13 +48,14 @@ class Sensor():
                 "rttvar",
                 "pmtu",
                 "omitted",
+                "delay",
             ]
         )
 
         for interval in result_dict["intervals"]:
             df = df.append({
-                "start_time": interval["streams"][0]["start"],
-                "end_time": interval["streams"][0]["end"],
+                "start_time": float(interval["streams"][0]["start"]) + self.delay,
+                "end_time": float(interval["streams"][0]["end"]) + self.delay,
                 "duration": interval["streams"][0]["seconds"],
                 "num_bytes": interval["streams"][0]["bytes"],
                 "bits_per_second": interval["streams"][0]["bits_per_second"],
@@ -62,6 +65,7 @@ class Sensor():
                 "rttvar": interval["streams"][0]["rttvar"],
                 "pmtu": interval["streams"][0]["pmtu"],
                 "omitted": interval["streams"][0]["omitted"],
+                "delay": self.delay,
             }, ignore_index=True)
 
         return df
@@ -71,6 +75,6 @@ class Sensor():
         result = self.generate_server()
         formatted_result = self.format_result(result)
         if self.csv_tag is not None:
-            fname = f"csvdump/{time_string}_{self.csv_tag}.csv"
+            fname = f"csvdump/{self.csv_tag}.csv"
             formatted_result.to_csv(fname)
             LOGGER.info(f"Written to file: {fname}")
