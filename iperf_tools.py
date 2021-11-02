@@ -58,15 +58,44 @@ def iperf_shell_error(key, traceback=None):
     return "Error!!!!"
 
 
-def start_server(port):
+def start_server(port, interval, iperf_timeout):
     """
-    Launch an iperf server session through the python iperf3 libary.
-    The server doesn't care about parallelism, and TOS/DSCP should
-    only need to be specified on the client end.
+    Launch iperf server session through subprocess.
+    This allows us to set interval.
     """
-    server = iperf3.Server()
-    server.port = port
-    server.verbose = True
-    result = server.run()
-    return result
+    LOGGER.info("Starting server.")
+    shell_statement = [
+                "iperf3",
+                # GENERAL OPTIONS
+                "--port", port,
+                "--format", "k",
+                "--interval", interval,
+                "--json",
+                # CLIENT SPECIFIC OPTIONS
+                "--server",
+                "--verbose",
+            ]
+    LOGGER.info(f"Shell statement: {shell_statement}")
+    # try:
+    iperf_out = subprocess.run(
+        shell_statement,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=iperf_timeout,
+        universal_newlines=True,
+    )
+    return iperf_out
+
+
+# def start_server(port):
+#     """
+#     Launch an iperf server session through the python iperf3 libary.
+#     The server doesn't care about parallelism, and TOS/DSCP should
+#     only need to be specified on the client end.
+#     """
+#     server = iperf3.Server()
+#     server.port = port
+#     server.verbose = True
+#     result = server.run()
+#     return result
     

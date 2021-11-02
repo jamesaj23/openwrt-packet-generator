@@ -15,6 +15,7 @@ import iperf_tools as ipt
 import connections as conn
 
 LOGGER = logging.getLogger()
+REPORTING_INTERVAL = 0.25
 
 
 class Sensor():
@@ -27,7 +28,7 @@ class Sensor():
         self.delay = delay
 
     def generate_server(self):
-        return ipt.start_server(self.port)
+        return ipt.start_server(self.port, REPORTING_INTERVAL)
 
     def format_result(self, result):
         try:
@@ -73,7 +74,7 @@ class Sensor():
     def run_experiment(self):
         time_string = datetime.datetime.now().strftime("%d_%m_%y %H_%M_%S")
         result = self.generate_server()
-        formatted_result = self.format_result(result)
+        formatted_result = self.format_result(result.stdout)
         if self.csv_tag is not None:
             fname = f"csvdump/{self.csv_tag}.csv"
             formatted_result.to_csv(fname)
