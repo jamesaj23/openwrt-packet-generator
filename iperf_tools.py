@@ -74,6 +74,7 @@ def start_server(port, interval, iperf_timeout):
                 # CLIENT SPECIFIC OPTIONS
                 "--server",
                 "--verbose",
+                "-1",  # Quits after one connection
             ]
     LOGGER.info(f"Shell statement: {shell_statement}")
     # try:

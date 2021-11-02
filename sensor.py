@@ -15,24 +15,25 @@ import iperf_tools as ipt
 import connections as conn
 
 LOGGER = logging.getLogger()
-REPORTING_INTERVAL = 0.25
+REPORTING_INTERVAL = "0.25"
 
 
 class Sensor():
     """Sensor to launch iperf measurement and gather result"""
-    def __init__(self, id, coordinator_host, port, delay=0, csv_tag=None):
+    def __init__(self, id, coordinator_host, port, delay=0, csv_tag=None, iperf_timout=180):
         self.id = id
         self.coordinator_host = coordinator_host
         self.port = port
         self.csv_tag = csv_tag
         self.delay = delay
+        self.iperf_timout = iperf_timout
 
     def generate_server(self):
-        return ipt.start_server(self.port, REPORTING_INTERVAL)
+        return ipt.start_server(self.port, REPORTING_INTERVAL, self.iperf_timout)
 
     def format_result(self, result):
         try:
-            result_dict = result.json
+            result_dict = json.loads(result)
         except json.decoder.JSONDecodeError as e:
             return e
 
