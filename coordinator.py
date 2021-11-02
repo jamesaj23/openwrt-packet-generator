@@ -38,7 +38,7 @@ class Coordinator():
         :return: List of outputs from each client
         """
         threads = []
-        results = [None for i in range(len(self.config["clients"]))]
+        results = [{"result": None, "delay": 0} for i in range(len(self.config["clients"]))]
         print(f"Len results: {len(results)}")
         for idx, client in enumerate(self.config["clients"]):
             client_args = [
@@ -47,8 +47,9 @@ class Coordinator():
                 client["port"],
                 client["interval"],
                 client["host"],
-                client["delay"],
+                client["duration"],
                 client["tos"],
+                client["delay"],
                 client["iperf_timeout"]
             ]
             LOGGER.info(f"Client args for client {idx}: {client_args}")
@@ -73,7 +74,7 @@ class Coordinator():
 
         return results
 
-    def _format_result(self, result):
+    def _format_result(self, result, delay):
         """
         Format a single JSON test output into a dict, then tabulate
         :param str result: String of iperf3 shell output,
@@ -93,17 +94,19 @@ class Coordinator():
                 "num_bytes",
                 "bits_per_second",
                 "omitted",
+                "delay",
             ]
         )
 
         for interval in result_dict["intervals"]:
             df = df.append({
-                "start_time": interval["sum"]["start"],
-                "end_time": interval["sum"]["end"],
+                "start_time": float(interval["sum"]["start"]) + delay,
+                "end_time": float(interval["sum"]["end"]) + delay,
                 "duration": interval["sum"]["seconds"],
                 "num_bytes": interval["sum"]["bytes"],
                 "bits_per_second": interval["sum"]["bits_per_second"],
                 "omitted": interval["sum"]["omitted"],
+                "delay": delay,
             }, ignore_index=True)
 
         return df
@@ -118,6 +121,6 @@ class Coordinator():
         results = self._generate_clients()
         formatted_results = []
         for r in results:
-            formatted_results.append(self._format_result(r.stdout))
+            formatted_results.append(self._format_result(r["result"].stdout, r["delay"]))
 
         return formatted_results
