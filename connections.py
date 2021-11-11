@@ -8,8 +8,12 @@ import numpy as np
 import pandas as pd
 
 LOGGER = logging.getLogger()
-LISTEN_DURATION = 2
+LISTEN_DURATION = 5
+BUFFER_SIZE = 4096
 CODE_SIZE_BYTES = 8
+
+SERVER_HOST = "0.0.0.0"
+
 
 # Dict of addresses for all hosts
 # THIS SHOULD GO IN THE COORDINATOR CLASS
@@ -27,9 +31,9 @@ SAMPLE_CONFIG = {
 }
 
 
-def establish_coordinator_connection(host, port):
+def establish_client_connection(host, port):
     """
-    For the purposes of this connection the coordinator is the CLIENT
+    For the purposes of this connection the SENSOR is the CLIENT (sender)
     :param str host: hostname of the SENSOR
     :param int port: desired port of the sensor connection
     :return: Connected socket object
@@ -44,18 +48,36 @@ def establish_coordinator_connection(host, port):
     return s
 
 
-def establish_sensor_connection(host, port):
+def establish_server_connection(host, port):
     """
-    For the purposes of this connection the sensor is the SERVER
+    For the purposes of this connection the COORDINATOR is the SERVER (reciever)
     :param str host: hostname of the SENSOR
     :param str port: desired port of the sensor connection
     :return: Tuple of (socket, client_socket, address)
     """
     s = socket.socket()
-    s.bind((host, port))
+    s.bind((SERVER_HOST, port))
 
     s.listen(LISTEN_DURATION)
     client_socket, address = s.accept()
+    LOGGER.info(f"Connection accepted at: {address}")
+    return client_socket
+
+
+def send_payload(s, payload):
+    LOGGER.info("Sending payload.")
+    s.sendall(payload.encode())
+    LOGGER.info("Payload sent.")
+
+
+def receive_payload(client_socket):
+    bytes_read = None
+    while True:
+        # payload = ""
+        bytes_read = client_socket.recv(BUFFER_SIZE).decode()
+        if not bytes_read:
+            break
+    return bytes_read
 
 
 def coordinator_handshake(client_socket, code=None):

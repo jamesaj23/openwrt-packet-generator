@@ -34,8 +34,9 @@ class Sensor():
     def format_result(self, result):
         try:
             result_dict = json.loads(result)
-        except json.decoder.JSONDecodeError as e:
-            return e
+        except json.JSONDecodeError as e:
+            LOGGER.debug(e)
+            raise e
 
         df = pd.DataFrame(
             columns=[
@@ -75,8 +76,10 @@ class Sensor():
     def run_experiment(self):
         time_string = datetime.datetime.now().strftime("%d_%m_%y %H_%M_%S")
         result = self.generate_server()
+        LOGGER.info("Received results, formatting.")
         formatted_result = self.format_result(result.stdout)
+        folder = "wed"
         if self.csv_tag is not None:
-            fname = f"csvdump/{self.csv_tag}.csv"
+            fname = f"csvdump/{folder}/{self.csv_tag}.csv"
             formatted_result.to_csv(fname)
             LOGGER.info(f"Written to file: {fname}")
