@@ -27,3 +27,6 @@ An instance can be manually started through `coordinator.py`, by running creatin
 An example method of running a sensor instance is included in `testing_handler_sensor.py`.
 This can be similarly started manually through `sensor.py`, defining a `Sensor` object and running `Sensor.run_experiment()`.
 
+
+## Requirements
+This library requires [pandas 1.3.4](https://pypi.org/project/pandas/), [numpy 1.21.4](https://pypi.org/project/numpy/) and [iperf3-python 0.1.11](https://pypi.org/project/iperf3/) python libraries to be installed, along with the [iperf3 software](https://iperf.fr/iperf-download.php).
