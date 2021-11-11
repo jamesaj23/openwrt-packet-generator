@@ -11,6 +11,10 @@ The selection of SQM scripts used in the project are also included here as `sqm_
 These scripts should be placed within the `/usr/lib/sqm/` folder in OpenWrt, while the configuration files should be placed at `/etc/config/sqm`. 
 
 
+## OpenWrt configs
+All config files from the OpenWrt router can be found in `openwrt_configs.zip`.
+
+
 ## File description
 `connections.py`: Library for creating connections between python instances and transferring files between them. Unused ATM
 `coordinator.py`: Defines an object that facilitates a single testrun from the coordinator device.
